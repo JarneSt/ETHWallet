@@ -1,18 +1,19 @@
 <template>
 <div>
-  <h1>{{dateToday}}</h1>
-
+  <img src="https://bankr.nl/wp-content/uploads/2020/12/1200px-Ethereum-icon-purple.svg.png">
   <h1>ETH Price</h1>
+  <p v-if="coinArray.length > 0">€ {{coinArray[0].price}}</p>
   <div v-if="coinArray.length > 0">
-    <p>€ {{coinArray[0].price}}</p>
-    <br>
-    <br>
-    <h1>Currently invested</h1>
-    <p>{{currentInvestedETH}} ETH</p>
-    <br>
-    <br>
-    <h1>Current Wallet Value</h1>
-    <p>€ {{currentWalletValue}}</p>
+    <div class="d-flex justify-content-evenly">
+      <div class="pd-20">
+        <h1>Current Wallet Value</h1>
+        <p>€ {{currentWalletValue}}</p>
+      </div>
+      <div class="pd-20">
+        <h1>Currently invested</h1>
+        <p>{{currentInvestedETH}} ETH</p>
+      </div>
+    </div>
 
     <div v-if="dayStartingVal !== 0">
       <div v-if="profitOrLossToday > 0">
@@ -26,24 +27,22 @@
     </div>
   </div>
 
-
-  <h1 class="pt-5 mt-5">History</h1>
-
+  <!--<h1 class="pt-5 mb-5 fs-1">History</h1>-->
   <div>
-    <input v-if="coinPriceHistoryBool === false" type="button" @click="startPriceHistory" value="Starting price history">
-    <h3 v-if="startingUpMessage === true">Starting up... (will take {{countDown}} seconds)</h3>
+    <button class="btn bg-eth text-white" v-if="coinPriceHistoryBool === false" type="button" @click="startPriceHistory">Starting price history</button>
+    <h3 id="startingUp" class="bg-whf" v-if="startingUpMessage === true">Starting up... ({{countDown}} seconds)</h3>
   </div>
 
-  <div v-if="coinPriceHistoryArray.length > 0" class="d-flex justify-content-center">
+  <div v-if="coinPriceHistoryArray.length > 0" class="d-flex justify-content-center" >
     <table border="1" class="table">
       <tbody>
       <th>PRICE</th>
       <th>WALLET VALUE</th>
       <th>CURRENT STATUS</th>
       <tr :class="object.bullish ? 'table-success' : 'table-danger'" v-for="object in coinPriceHistoryArray">
-        <td class="p-2" >€ {{object.price}}</td>
-        <td class="p-2" >€ {{object.currentValue}}</td>
-        <td class="p-2" >{{object.result}}</td>
+        <td>€ {{object.price}}</td>
+        <td>€ {{object.currentValue}}</td>
+        <td>{{object.result}}</td>
       </tr>
       </tbody>
     </table>
@@ -169,11 +168,18 @@ export default {
       if (dt.getHours() === 0){
         this.$store.state.startPriceHistory = true;
         this.$store.state.dayStartingValue = this.currentWalletValue
+        this.startPriceHistory();
       }
 
       if (dt.getHours() === 23 && dt.getMinutes() === 59){
         this.$store.state.startPriceHistory = false;
         this.$store.state.dayEndingValue = this.currentWalletValue
+      }
+
+      if (dt.getMinutes() === 10){
+        this.$store.state.startPriceHistory = true;
+        this.$store.state.dayStartingValue = this.currentWalletValue
+        this.startPriceHistory();
       }
 
       if (this.coinPriceHistoryArray.length > 0){
@@ -189,6 +195,14 @@ p {
   font-size: 27px;
 }
 
+h1 {
+  font-size: 23px;
+}
+
+table {
+  margin: auto;
+}
+
 .colorRed {
   color: red;
 }
@@ -197,6 +211,27 @@ p {
   color: green;
 }
 
+.pd-20 {
+  padding: 20px;
+}
+
+img {
+  width: 200px;
+  margin: 20px;
+}
+
+.bg-eth {
+  background: #626890;
+}
+
+#startingUp {
+  background: #626890;
+  color: white;
+  width: 80%;
+  margin: auto;
+  border-radius: 10px;
+  padding: 10px;
+}
 * {
   font-family: Arial,sans-serif;
 }
