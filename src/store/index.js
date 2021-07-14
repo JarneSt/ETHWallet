@@ -5,7 +5,12 @@ export default createStore({
     coinArr : [],
     investedETH : 8.33273612,
     startPriceHistory : false,
-    coinPriceHistoryArr : []
+    startingUpMsg : false,
+    coinPriceHistoryArr : [],
+
+
+    dayStartingValue : 0,
+    dayEndingValue: 0
   },
   mutations: {
   },

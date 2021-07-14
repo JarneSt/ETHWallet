@@ -1,5 +1,7 @@
 <template>
 <div>
+  <h1>{{dateToday}}</h1>
+
   <h1>ETH Price</h1>
   <div v-if="coinArray.length > 0">
     <p>€ {{coinArray[0].price}}</p>
@@ -11,21 +13,37 @@
     <br>
     <h1>Current Wallet Value</h1>
     <p>€ {{currentWalletValue}}</p>
+
+    <div v-if="dayStartingVal !== 0">
+      <div v-if="profitOrLossToday > 0">
+        <h1>Profit Today</h1>
+        <p class="colorGreen">€ {{profitOrLossToday}}</p>
+      </div>
+      <div v-else-if="profitOrLossToday < 0">
+        <h1>Loss Today</h1>
+        <p class="colorRed">€ {{profitOrLossToday}}</p>
+      </div>
+    </div>
   </div>
 
 
   <h1 class="pt-5 mt-5">History</h1>
 
-  <div v-if="coinPriceHistoryBool === false">
-    <input type="button" @click="startPriceHistory" value="Starting price history">
+  <div>
+    <input v-if="coinPriceHistoryBool === false" type="button" @click="startPriceHistory" value="Starting price history">
+    <h3 v-if="startingUpMessage === true">Starting up... (will take {{countDown}} seconds)</h3>
   </div>
 
   <div v-if="coinPriceHistoryArray.length > 0" class="d-flex justify-content-center">
-    <table border="1">
+    <table border="1" class="table">
       <tbody>
       <th>PRICE</th>
-      <tr v-for="object in coinPriceHistoryArray">
-        <td class="p-2" style="margin-right: 50px" >€ {{object.price}}</td>
+      <th>WALLET VALUE</th>
+      <th>CURRENT STATUS</th>
+      <tr :class="object.bullish ? 'table-success' : 'table-danger'" v-for="object in coinPriceHistoryArray">
+        <td class="p-2" >€ {{object.price}}</td>
+        <td class="p-2" >€ {{object.currentValue}}</td>
+        <td class="p-2" >{{object.result}}</td>
       </tr>
       </tbody>
     </table>
@@ -37,12 +55,33 @@
 
 export default {
   name: "walletInformation",
+  data(){
+    return {
+      countDown : 0
+    }
+  },
   computed : {
+    dateToday(){
+      const dt = new Date();
+      return `${dt.getDate()}/${dt.getMonth()}/${dt.getFullYear()}`;
+    },
     coinArray(){
       return this.$store.state.coinArr;
     },
     currentWalletValue(){
-      return this.$store.state.investedETH * this.$store.state.coinArr[0].price
+      return (this.$store.state.investedETH * this.$store.state.coinArr[0].price).toFixed(2)
+    },
+    dayStartingVal(){
+      return parseFloat(this.$store.state.dayStartingValue);
+    },
+    profitOrLossToday(){
+      let dayStartVal = parseFloat(this.$store.state.dayStartingValue);
+      let currentWalletVal = parseFloat(this.currentWalletValue);
+
+      if (this.coinPriceHistoryArray.length > 0){
+        this.$forceUpdate;
+        return (currentWalletVal - dayStartVal).toFixed(2);
+      }
     },
     currentInvestedETH(){
       return this.$store.state.investedETH;
@@ -52,11 +91,25 @@ export default {
     },
     coinPriceHistoryArray(){
       return this.$store.state.coinPriceHistoryArr;
-    }
+    },
+    startingUpMessage(){
+      return this.$store.state.startingUpMsg;
+    },
+
   },
   methods : {
+    minuteCountDown(){
+      this.countDown = 60;
+      setInterval(() => {
+        this.countDown--;
+      }, 1000)
+    },
     startPriceHistory(){
       this.$store.state.startPriceHistory = true;
+      this.$store.state.startingUpMsg = true;
+
+      this.$store.state.dayStartingValue = this.currentWalletValue
+      this.minuteCountDown();
     },
     async requestData() {
       try {
@@ -70,10 +123,31 @@ export default {
         this.$store.state.coinArr = [];
         this.$store.state.coinArr.push(obj);
 
+        this.$forceUpdate;
         if (this.$store.state.startPriceHistory === true){
-          this.$store.state.coinPriceHistoryArr.push(obj);
-        }
+          console.log('Starting value of the day',this.$store.state.dayStartingValue)
+          console.log('The current wallet value',this.currentWalletValue)
 
+          if (this.$store.state.dayStartingValue < this.currentWalletValue ){
+            let historyObj = {
+              price: res.market_data.current_price.eur,
+              currentValue : parseFloat(this.currentWalletValue),
+              bullish : true,
+              result : 'PROFIT'
+            }
+            this.$store.state.coinPriceHistoryArr.push(historyObj);
+          }
+          else if (this.$store.state.dayStartingValue > this.currentWalletValue ) {
+            let historyObj = {
+              price: res.market_data.current_price.eur,
+              currentValue : parseFloat(this.currentWalletValue),
+              bullish : false,
+              result : 'LOSS'
+            }
+            console.log(historyObj);
+            this.$store.state.coinPriceHistoryArr.push(historyObj);
+          }
+        }
       } catch (e) {
         console.log(e);
       }
@@ -81,7 +155,7 @@ export default {
     async keepRequesting() {
       await setInterval(() => {
         this.requestData();
-      }, 30000 );
+      }, 60000 );
     },
   },
   async mounted() {
@@ -94,10 +168,16 @@ export default {
       const dt = new Date();
       if (dt.getHours() === 0){
         this.$store.state.startPriceHistory = true;
+        this.$store.state.dayStartingValue = this.currentWalletValue
       }
 
       if (dt.getHours() === 23 && dt.getMinutes() === 59){
         this.$store.state.startPriceHistory = false;
+        this.$store.state.dayEndingValue = this.currentWalletValue
+      }
+
+      if (this.coinPriceHistoryArray.length > 0){
+        this.$store.state.startingUpMsg = false;
       }
     }, 1000)
   }
@@ -109,7 +189,15 @@ p {
   font-size: 27px;
 }
 
+.colorRed {
+  color: red;
+}
+
+.colorGreen {
+  color: green;
+}
+
 * {
-  font-family: Arial;
+  font-family: Arial,sans-serif;
 }
 </style>
