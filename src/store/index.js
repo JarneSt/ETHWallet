@@ -7,7 +7,7 @@ export default createStore({
     startPriceHistory : false,
     startingUpMsg : false,
     coinPriceHistoryArr : [],
-
+    profitLossHistory : [],
 
     dayStartingValue : 0,
     dayEndingValue: 0

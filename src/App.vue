@@ -1,6 +1,7 @@
 <template>
   <div id="nav">
-    <router-link to="/">Wallet Info</router-link>
+    <router-link to="/">Wallet Info</router-link>  |
+    <router-link to="/changeinvestment">Change investment</router-link>
   </div>
   <router-view/>
 </template>

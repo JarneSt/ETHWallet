@@ -18,11 +18,11 @@
     <div v-if="dayStartingVal !== 0">
       <div v-if="profitOrLossToday > 0">
         <h1>Profit Today</h1>
-        <p class="colorGreen">€ {{profitOrLossToday}}</p>
+        <p class="colorGreen">€ {{Math.abs(profitOrLossToday)}}</p>
       </div>
       <div v-else-if="profitOrLossToday < 0">
         <h1>Loss Today</h1>
-        <p class="colorRed">€ {{profitOrLossToday}}</p>
+        <p class="colorRed">€ {{Math.abs(profitOrLossToday)}}</p>
       </div>
     </div>
   </div>
@@ -31,6 +31,11 @@
   <div>
     <button class="btn bg-eth text-white" v-if="coinPriceHistoryBool === false" type="button" @click="startPriceHistory">Starting price history</button>
     <h3 id="startingUp" class="bg-whf" v-if="startingUpMessage === true">Starting up... ({{countDown}} seconds)</h3>
+  </div>
+
+
+  <div v-if="coinPriceHistoryBool === true && countDown <= 0">
+    <h1>Price history started from {{dateTimeToday}}</h1>
   </div>
 
   <div v-if="coinPriceHistoryArray.length > 0" class="d-flex justify-content-center" >
@@ -47,6 +52,8 @@
       </tbody>
     </table>
   </div>
+
+
 </div>
 </template>
 
@@ -60,9 +67,18 @@ export default {
     }
   },
   computed : {
+    dateTimeToday(){
+      const dt = new Date();
+
+      let hours = ('0'+dt.getHours()).slice(-2);
+      let mins = ('0'+dt.getMinutes()).slice(-2);
+      let seconds = ('0'+dt.getSeconds()).slice(-2);
+
+      return `\n${dt.getDate()}/${dt.getMonth()+1}/${dt.getFullYear()}  ${hours}:${mins}:${seconds}`;
+    },
     dateToday(){
       const dt = new Date();
-      return `${dt.getDate()}/${dt.getMonth()}/${dt.getFullYear()}`;
+      return `\n${dt.getDate()}/${dt.getMonth()}/${dt.getFullYear()}`;
     },
     coinArray(){
       return this.$store.state.coinArr;
@@ -94,13 +110,17 @@ export default {
     startingUpMessage(){
       return this.$store.state.startingUpMsg;
     },
-
+    profitLossDayResult(){
+      return (this.$store.state.dayEndingValue - this.$store.state.dayStartingValue).toFixed(2);
+    }
   },
   methods : {
     minuteCountDown(){
       this.countDown = 60;
       setInterval(() => {
-        this.countDown--;
+        if (this.countDown > 0){
+          this.countDown--;
+        }
       }, 1000)
     },
     startPriceHistory(){
@@ -109,6 +129,11 @@ export default {
 
       this.$store.state.dayStartingValue = this.currentWalletValue
       this.minuteCountDown();
+    },
+    endPriceHistory(){
+      this.$store.state.startingPriceHistory = false;
+      this.$store.state.startingUpMsg = false;
+      this.$store.state.dayEndingValue = this.currentWalletValue;
     },
     async requestData() {
       try {
@@ -153,7 +178,9 @@ export default {
     },
     async keepRequesting() {
       await setInterval(() => {
-        this.requestData();
+        if (this.coinPriceHistoryBool === true){
+          this.requestData();
+        }
       }, 60000 );
     },
   },
@@ -162,24 +189,32 @@ export default {
     this.$store.state.fetchedStartupBool = true;
     await this.keepRequesting();
 
-
     setInterval(() => {
       const dt = new Date();
       if (dt.getHours() === 0){
-        this.$store.state.startPriceHistory = true;
-        this.$store.state.dayStartingValue = this.currentWalletValue
         this.startPriceHistory();
       }
 
       if (dt.getHours() === 23 && dt.getMinutes() === 59){
-        this.$store.state.startPriceHistory = false;
-        this.$store.state.dayEndingValue = this.currentWalletValue
-      }
+        this.endPriceHistory();
+        //TODO: ADD THIS DAILY PROFIT/LOSS RESULT AS OBJECT INTO AN ARRAY (this.profitLossDayResult());
 
-      if (dt.getMinutes() === 10){
-        this.$store.state.startPriceHistory = true;
-        this.$store.state.dayStartingValue = this.currentWalletValue
-        this.startPriceHistory();
+        console.log('endedPriceHistory');
+        let result = 'LOSS';
+        if (this.profitLossDayResult > 0){
+          result = 'PROFIT';
+        }
+
+        let dailyPLObj = {
+          date : this.dateToday,
+          pOrL : this.profitLossDayResult,
+          plResult : result
+        }
+        console.log('Created object', dailyPLObj);
+        this.$store.state.profitLossHistory.push(dailyPLObj);
+
+        console.log('Pushed object into profitLossHistory', this.$store.state.profitLossHistory);
+        this.$store.state.coinPriceHistoryArr = [];
       }
 
       if (this.coinPriceHistoryArray.length > 0){
@@ -234,5 +269,16 @@ img {
 }
 * {
   font-family: Arial,sans-serif;
+}
+
+@media only screen and (max-width: 550px){
+  p {
+    font-size: 17px;
+    font-weight: bold;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
 }
 </style>

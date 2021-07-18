@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
+import InvestSettings from "../views/InvestSettings";
 
 const routes = [
   {
@@ -7,6 +8,10 @@ const routes = [
     name: 'Home',
     component: Home
   },
+  {
+    path: '/changeinvestment',
+    name: 'ChangeInvestment',
+    component: InvestSettings  },
 ]
 
 const router = createRouter({
