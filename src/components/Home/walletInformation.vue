@@ -52,8 +52,6 @@
       </tbody>
     </table>
   </div>
-
-
 </div>
 </template>
 
@@ -185,6 +183,14 @@ export default {
     },
   },
   async mounted() {
+    if(localStorage.getItem('investedETH') === null){
+      this.$store.state.investedETH = 8.33273612
+      localStorage.setItem('investedETH',this.$store.state.investedETH)
+    }
+    else {
+      this.$store.state.investedETH = parseFloat(localStorage.getItem('investedETH'));
+    }
+
     await this.requestData();
     this.$store.state.fetchedStartupBool = true;
     await this.keepRequesting();
@@ -221,7 +227,7 @@ export default {
         this.$store.state.startingUpMsg = false;
       }
     }, 1000)
-  }
+  },
 }
 </script>
 

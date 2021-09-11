@@ -3,7 +3,7 @@ import { createStore } from 'vuex'
 export default createStore({
   state: {
     coinArr : [],
-    investedETH : 8.33273612,
+    investedETH : 0,
     startPriceHistory : false,
     startingUpMsg : false,
     coinPriceHistoryArr : [],
