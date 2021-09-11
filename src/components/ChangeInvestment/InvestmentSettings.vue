@@ -3,7 +3,10 @@
   <div>
     <h1>Your investment</h1>
     <p>{{totalInvestmentInETH}} ETH</p>
-    <input type="button" value="Change investment" @click="changeInvestmentClicked">
+    <div class="d-flex flex-column w-25 m-auto">
+      <input type="button" value="Change investment" @click="changeInvestmentClicked">
+      <input type="button" value="Reset to default" @click="resetToDefaultInvestment">
+    </div>
   </div>
 </div>
 </template>
@@ -29,6 +32,11 @@ export default {
       else {
         alert('Please fill in an amount and not any letters');
       }
+    },
+    resetToDefaultInvestment(){
+      localStorage.clear();
+      this.$router.push('/');
+      alert('Resetted back to default');
     }
   }
 }

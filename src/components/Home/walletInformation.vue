@@ -184,8 +184,8 @@ export default {
   },
   async mounted() {
     if(localStorage.getItem('investedETH') === null){
-      this.$store.state.investedETH = 8.33273612
-      localStorage.setItem('investedETH',this.$store.state.investedETH)
+      this.$store.state.investedETH = 8.33273612;
+      localStorage.setItem('investedETH',this.$store.state.investedETH);
     }
     else {
       this.$store.state.investedETH = parseFloat(localStorage.getItem('investedETH'));
